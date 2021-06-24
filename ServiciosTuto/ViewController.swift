@@ -1,5 +1,13 @@
 import UIKit
 
+//Creamos una estructura para contener nuestro objeto JSON y modelarlo a nuestra conveniencia
+//Codable nos permitirá serializar la clase - a partir de Swift 4
+struct Human:Codable {
+    let user:String
+    let age:Int
+    let isHappy:Bool
+}
+
 class ViewController: UIViewController {
     
     //MARK: -Referencias UI
@@ -42,20 +50,18 @@ class ViewController: UIViewController {
                 return
             }
             
-            //creamos un diccionario para hacer más legible la información que viene de regreso usando la clase JSONSerialization... pero como esta clase no acepta como parametro un optional (data), entonces tenemos que asegurarnos de poderla crear tanto la data como el diccionario:
+            //Obtenemos la información consultada que será un JSON
             guard let dataFromService = data,
-                  //el parametro options puede ser un arreglo vacio si no se le harán modificaciones
-                  let dictionary = try? JSONSerialization.jsonObject(with: dataFromService, options: []) as? [String:Any] else {
+                  //Ahora nuestro objeto JSON será modelado de acuerdo a la estructura Human
+                  let humanModel:Human = try? JSONDecoder().decode(Human.self, from: dataFromService) else {
                 return
             }
             
             //TODOS LOS LLAMADOS A LA UI SE HACEN EN EL HILO PRINCIPAL -> ya que por defecto los servicios se ejecutan en un hilo secundario
             DispatchQueue.main.async {
-                //inicializamos un valor por defecto en nuestro diccionario en caso de que no obtener el valor
-                let isHappy = dictionary["isHappy"] as? Bool ?? false
-                
-                self.statusLabel.text = isHappy ? "Es feliz!":"Es triste"
-                self.nameLabel.text = dictionary["user"] as? String
+                //Asignamos los valores para mostrar en la UI
+                self.statusLabel.text = humanModel.isHappy ? "Es feliz!":"Es triste"
+                self.nameLabel.text = humanModel.user
                 
                 //detenemos el loader
                 self.activityIndicator.stopAnimating()
