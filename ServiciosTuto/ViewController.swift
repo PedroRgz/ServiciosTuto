@@ -1,4 +1,5 @@
 import UIKit
+import Alamofire
 
 //Creamos una estructura para contener nuestro objeto JSON y modelarlo a nuestra conveniencia
 //Codable nos permitirá serializar la clase - a partir de Swift 4
@@ -42,16 +43,20 @@ class ViewController: UIViewController {
         //Iniciamos el loader
         activityIndicator.startAnimating()
         
-        URLSession.shared.dataTask(with: endpoint) { (data: Data?, _,error: Error?) in
-            
+        //Utilizamos Alamofire para hacer la petición de los datos en vez de URLSession
+        //el primer parámetro será un URL
+        //method -> es un enum -> puede utilizar los metodos de HTTP
+        //por ahora no necesitamos parámetros, por lo que será nulo
+        //los demás parámetros son opcionales, por lo que serán borrados: , encoding: <#T##ParameterEncoding#>, headers: <#T##HTTPHeaders?#>, interceptor: <#T##RequestInterceptor?#>, requestModifier: <#T##Session.RequestModifier?##Session.RequestModifier?##(inout URLRequest) throws -> Void#>
+        AF.request(endpoint, method: .get, parameters: nil).responseData { (response:AFDataResponse<Data>) in
             //primero evaluamos si viene un error
-            if error != nil{
+            if response.error != nil{
                 print("Surgió un error inesperado")
                 return
             }
             
             //Obtenemos la información consultada que será un JSON
-            guard let dataFromService = data,
+            guard let dataFromService = response.data,
                   //Ahora nuestro objeto JSON será modelado de acuerdo a la estructura Human
                   let humanModel:Human = try? JSONDecoder().decode(Human.self, from: dataFromService) else {
                 return
@@ -66,8 +71,7 @@ class ViewController: UIViewController {
                 //detenemos el loader
                 self.activityIndicator.stopAnimating()
             }
-            
-        }.resume()
+        }
     }
 }
 
